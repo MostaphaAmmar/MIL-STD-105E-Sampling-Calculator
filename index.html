@@ -1,124 +1,90 @@
 <!DOCTYPE html>
 <html lang="en">
 <head>
-    <meta charset="UTF-8">
-    <meta name="viewport" content="width=device-width, initial-scale=1.0">
-
-    <title>MIL-STD-105E Sampling Calculator</title>
-    <style>
-        h1 {font-size: 20px; /* Adjust the size as needed */  }
-        body { font-family: Arial, sans-serif; padding: 20px; }
-        label { display: block; margin-bottom: 5px; }
-        select, input { margin-bottom: 15px; padding: 5px; width: 100%; }
-        .result { margin-top: 20px; font-weight: bold; }
-        .accepted { color: green; }
-        .rejected { color: red; }
-        .hidden { display: none; }
-        .header { display: flex; justify-content: space-between; align-items: center; margin-bottom: 20px; }
-        .logo { max-height: 100px; }
-        
-
-    </style>
+  <meta charset="UTF-8" />
+  <meta name="viewport" content="width=device-width, initial-scale=1.0"/>
+  <title>MIL-STD-105E Sampling Calculator</title>
+  <style>
+    /* Keep all your original styles and add: */
+    .tab { display: none; }
+    .tab.active { display: block; }
+    .tab-buttons button {
+      margin-right: 10px;
+      padding: 10px;
+    }
+  </style>
 </head>
 <body>
-    <div class="header">
-        <img src="Scitra logo.jpg" alt="Scitra Logo" class="logo">
-        <div>
-            <h2>Quality Department</h2>
-            <h3>IPC and Packaging Section</h3>
-        </div>
+  <div class="header">
+    <img src="Scitra logo.jpg" alt="Scitra Logo" class="logo">
+    <div>
+      <h2>Quality Department</h2>
+      <h3>IPC and Packaging Section</h3>
     </div>
+  </div>
 
-    <h1>MIL-STD-105E Sampling Calculator</h1>
+  <h1>MIL-STD-105E Sampling Calculator</h1>
 
-    <label for="population">Population Size:</label>
-    <select id="population">
-        <option value="0">300-500</option>
-        <option value="1">501-1200</option>
-        <option value="2">1201-3200</option>
-        <option value="3">3201-10000</option>
-        <option value="4">10001-35000</option>
-        <option value="5">35001-150000</option>
-        <option value="6">150001-500000</option>
-        <option value="7">500001-∞</option>
-    </select>
+  <div class="tab-buttons">
+    <button onclick="showTab('mil')">MIL-STD Sampling</button>
+    <button onclick="showTab('binomial')">Binomial Probability</button>
+  </div>
 
-    <label for="samplingLevel">Sampling Level:</label>
-    <select id="samplingLevel">
-        <option value="normal">Normal</option>
-        <option value="tightened">Tightened</option>
-        <option value="reduced">Reduced</option>
-        <option value="special1">Special 1</option>
-        <option value="special2">Special 2</option>
-        <option value="special3">Special 3</option>
-    </select>
+  <!-- MIL-STD Tab -->
+  <div id="mil" class="tab active">
+    <!-- Keep your existing MIL-STD content unchanged -->
+    <!-- ... existing code ... -->
+  </div>
 
-    <button onclick="calculateSampleSize()">Calculate Sample Size</button>
+  <!-- Binomial Probability Tab -->
+  <div id="binomial" class="tab">
+    <label for="n">Sample Size (n):</label>
+    <input type="number" id="n" min="1">
 
-    <div class="result" id="sampleSize"></div>
+    <label for="k">Number of Defectives (k):</label>
+    <input type="number" id="k" min="0">
 
-    <div id="defectSection" class="hidden">
-        <label for="defectType">Defect Type:</label>
-        <select id="defectType">
-            <option value="critical">Critical (0%)</option>
-            <option value="majorA">Major A (0.1%)</option>
-            <option value="majorB">Major B (1%)</option>
-            <option value="minor">Minor (4%)</option>
-        </select>
+    <label for="p">Defect Rate (p):</label>
+    <input type="number" id="p" step="0.0001" min="0" max="1" placeholder="e.g., 0.01 for 1%">
 
-        <label for="defectCount">Number of Defects:</label>
-        <input type="number" id="defectCount" min="0">
+    <button onclick="calculateBinomial()">Calculate Probability</button>
 
-        <button onclick="calculateAcceptance()">Calculate Acceptance</button>
+    <div class="result" id="binomialResult"></div>
+  </div>
 
-        <div class="result" id="result"></div>
-    </div>
+  <script>
+    function showTab(tabId) {
+      document.querySelectorAll('.tab').forEach(tab => tab.classList.remove('active'));
+      document.getElementById(tabId).classList.add('active');
+    }
 
-    <script>
-        const sampleSizeTable = {
-            normal: [50, 80, 125, 200, 315, 500, 800, 1250],
-            tightened: [80, 125, 200, 315, 500, 800, 1250, 1250],
-            reduced: [32, 50, 80, 125, 200, 315, 500, 800],
-            special1: [8, 13, 20, 32, 50, 80, 125, 200],
-            special2: [5, 8, 13, 20, 32, 50, 80, 125],
-            special3: [3, 5, 8, 13, 20, 32, 50, 80]
-        };
+    function factorial(x) {
+      if (x === 0 || x === 1) return 1;
+      let result = 1;
+      for (let i = 2; i <= x; i++) result *= i;
+      return result;
+    }
 
-        const rejectionLimits = {
-            critical: [1, 1, 1, 1, 1, 1, 1, 1],
-            majorA: [1, 1, 1, 2, 2, 2, 3, 4],
-            majorB: [2, 3, 4, 6, 8, 11, 15, 22],
-            minor: [6, 8, 11, 15, 22, 22, 22, 22]
-        };
+    function binomialCoefficient(n, k) {
+      return factorial(n) / (factorial(k) * factorial(n - k));
+    }
 
-        let currentSampleSize = 0;
+    function calculateBinomial() {
+      const n = parseInt(document.getElementById('n').value);
+      const k = parseInt(document.getElementById('k').value);
+      const p = parseFloat(document.getElementById('p').value);
 
-        function calculateSampleSize() {
-            const populationIndex = parseInt(document.getElementById('population').value);
-            const samplingLevel = document.getElementById('samplingLevel').value;
+      if (isNaN(n) || isNaN(k) || isNaN(p) || k > n || p < 0 || p > 1) {
+        document.getElementById('binomialResult').textContent = "Please enter valid values.";
+        return;
+      }
 
-            currentSampleSize = sampleSizeTable[samplingLevel][populationIndex];
-            document.getElementById('sampleSize').textContent = `Sample Size: ${currentSampleSize}`;
+      const binomCoeff = binomialCoefficient(n, k);
+      const prob = binomCoeff * Math.pow(p, k) * Math.pow(1 - p, n - k);
 
-            // Show the defect section after calculating the sample size
-            document.getElementById('defectSection').classList.remove('hidden');
-        }
-
-        function calculateAcceptance() {
-            const defectType = document.getElementById('defectType').value;
-            const defectCount = parseInt(document.getElementById('defectCount').value);
-            const populationIndex = parseInt(document.getElementById('population').value);
-            const acceptanceLimit = rejectionLimits[defectType][populationIndex];
-
-            const resultElement = document.getElementById('result');
-            if (defectCount <= acceptanceLimit) {
-                resultElement.textContent = `Accepted. Maximum allowed defects: ${acceptanceLimit}`;
-                resultElement.className = 'result accepted';
-            } else {
-                resultElement.textContent = `Rejected. Maximum allowed defects: ${acceptanceLimit}`;
-                resultElement.className = 'result rejected';
-            }
-        }
-    </script>
+      document.getElementById('binomialResult').textContent =
+        `P(X = ${k}) = ${prob.toFixed(6)}`;
+    }
+  </script>
 </body>
 </html>
