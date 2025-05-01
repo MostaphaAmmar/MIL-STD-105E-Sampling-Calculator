@@ -6,7 +6,7 @@
 
     <title>MIL-STD-105E Sampling Calculator</title>
     <style>
-        h1 {font-size: 20px; /* Adjust the size as needed */  }
+        h1 { font-size: 20px; }
         body { font-family: Arial, sans-serif; padding: 20px; }
         label { display: block; margin-bottom: 5px; }
         select, input { margin-bottom: 15px; padding: 5px; width: 100%; }
@@ -16,8 +16,10 @@
         .hidden { display: none; }
         .header { display: flex; justify-content: space-between; align-items: center; margin-bottom: 20px; }
         .logo { max-height: 100px; }
-        
-
+        .tab-button { margin-right: 10px; padding: 10px 20px; cursor: pointer; border: 1px solid #ccc; background-color: #f0f0f0; }
+        .tab-button.active { background-color: #ddd; font-weight: bold; }
+        .tab-content { display: none; }
+        .tab-content.active { display: block; }
     </style>
 </head>
 <body>
@@ -29,49 +31,69 @@
         </div>
     </div>
 
-    <h1>MIL-STD-105E Sampling Calculator</h1>
+    <div>
+        <button class="tab-button active" onclick="showTab('tab1')">Sampling Calculator</button>
+        <button class="tab-button" onclick="showTab('tab2')">Detection Probability</button>
+    </div>
 
-    <label for="population">Population Size:</label>
-    <select id="population">
-        <option value="0">300-500</option>
-        <option value="1">501-1200</option>
-        <option value="2">1201-3200</option>
-        <option value="3">3201-10000</option>
-        <option value="4">10001-35000</option>
-        <option value="5">35001-150000</option>
-        <option value="6">150001-500000</option>
-        <option value="7">500001-∞</option>
-    </select>
-
-    <label for="samplingLevel">Sampling Level:</label>
-    <select id="samplingLevel">
-        <option value="normal">Normal</option>
-        <option value="tightened">Tightened</option>
-        <option value="reduced">Reduced</option>
-        <option value="special1">Special 1</option>
-        <option value="special2">Special 2</option>
-        <option value="special3">Special 3</option>
-    </select>
-
-    <button onclick="calculateSampleSize()">Calculate Sample Size</button>
-
-    <div class="result" id="sampleSize"></div>
-
-    <div id="defectSection" class="hidden">
-        <label for="defectType">Defect Type:</label>
-        <select id="defectType">
-            <option value="critical">Critical (0%)</option>
-            <option value="majorA">Major A (0.1%)</option>
-            <option value="majorB">Major B (1%)</option>
-            <option value="minor">Minor (4%)</option>
+    <div id="tab1" class="tab-content active">
+        <h1>MIL-STD-105E Sampling Calculator</h1>
+        <label for="population">Population Size:</label>
+        <select id="population">
+            <option value="0">300-500</option>
+            <option value="1">501-1200</option>
+            <option value="2">1201-3200</option>
+            <option value="3">3201-10000</option>
+            <option value="4">10001-35000</option>
+            <option value="5">35001-150000</option>
+            <option value="6">150001-500000</option>
+            <option value="7">500001-∞</option>
         </select>
 
-        <label for="defectCount">Number of Defects:</label>
-        <input type="number" id="defectCount" min="0">
+        <label for="samplingLevel">Sampling Level:</label>
+        <select id="samplingLevel">
+            <option value="normal">Normal</option>
+            <option value="tightened">Tightened</option>
+            <option value="reduced">Reduced</option>
+            <option value="special1">Special 1</option>
+            <option value="special2">Special 2</option>
+            <option value="special3">Special 3</option>
+        </select>
 
-        <button onclick="calculateAcceptance()">Calculate Acceptance</button>
+        <button onclick="calculateSampleSize()">Calculate</button>
 
-        <div class="result" id="result"></div>
+        <div class="result" id="sampleSize"></div>
+
+        <div id="defectSection" class="hidden">
+            <label for="defectType">Defect Type:</label>
+            <select id="defectType">
+                <option value="critical">Critical (0%)</option>
+                <option value="majorA">Major A (0.1%)</option>
+                <option value="majorB">Major B (1%)</option>
+                <option value="minor">Minor (4%)</option>
+            </select>
+
+            <label for="defectCount">Number of Defects:</label>
+            <input type="number" id="defectCount" min="0">
+
+            <button onclick="calculateAcceptance()">Calculate</button>
+            <div class="result" id="result"></div>
+        </div>
+    </div>
+
+    <div id="tab2" class="tab-content">
+        <h1>Detection Probability</h1>
+        <label for="batchSize">Batch Size:</label>
+        <input type="number" id="batchSize" min="1">
+
+        <label for="sampleSizeBinomial">Sample Size:</label>
+        <input type="number" id="sampleSizeBinomial" min="1">
+
+        <label for="defectsNumber">Number of Defects in Batch:</label>
+        <input type="number" id="defectsNumber" min="1">
+
+        <button onclick="calculateDetectionProbability()">Calculate</button>
+        <div class="result" id="binomialResult"></div>
     </div>
 
     <script>
@@ -96,11 +118,8 @@
         function calculateSampleSize() {
             const populationIndex = parseInt(document.getElementById('population').value);
             const samplingLevel = document.getElementById('samplingLevel').value;
-
             currentSampleSize = sampleSizeTable[samplingLevel][populationIndex];
-            document.getElementById('sampleSize').textContent = Sample Size: ${currentSampleSize};
-
-            // Show the defect section after calculating the sample size
+            document.getElementById('sampleSize').textContent = `Sample Size: ${currentSampleSize}`;
             document.getElementById('defectSection').classList.remove('hidden');
         }
 
@@ -109,15 +128,33 @@
             const defectCount = parseInt(document.getElementById('defectCount').value);
             const populationIndex = parseInt(document.getElementById('population').value);
             const acceptanceLimit = rejectionLimits[defectType][populationIndex];
-
             const resultElement = document.getElementById('result');
             if (defectCount <= acceptanceLimit) {
-                resultElement.textContent = Accepted. Maximum allowed defects: ${acceptanceLimit};
+                resultElement.textContent = `Accepted. Maximum allowed defects: ${acceptanceLimit}`;
                 resultElement.className = 'result accepted';
             } else {
-                resultElement.textContent = Rejected. Maximum allowed defects: ${acceptanceLimit};
+                resultElement.textContent = `Rejected. Maximum allowed defects: ${acceptanceLimit}`;
                 resultElement.className = 'result rejected';
             }
+        }
+
+        function calculateDetectionProbability() {
+            const batchSize = parseInt(document.getElementById('batchSize').value);
+            const sampleSize = parseInt(document.getElementById('sampleSizeBinomial').value);
+            const defects = parseInt(document.getElementById('defectsNumber').value);
+            const defectRate = defects / batchSize;
+            const probNotDetected = Math.pow((1 - defectRate), sampleSize);
+            const probDetected = (1 - probNotDetected) * 100;
+            document.getElementById('binomialResult').textContent = `Probability of detecting at least one defect: ${probDetected.toFixed(2)}%`;
+        }
+
+        function showTab(tabId) {
+            const tabs = document.querySelectorAll('.tab-content');
+            const buttons = document.querySelectorAll('.tab-button');
+            tabs.forEach(tab => tab.classList.remove('active'));
+            buttons.forEach(btn => btn.classList.remove('active'));
+            document.getElementById(tabId).classList.add('active');
+            event.target.classList.add('active');
         }
     </script>
 </body>
