@@ -145,7 +145,7 @@
             const defectRate = defects / batchSize;
             const probNotDetected = Math.pow((1 - defectRate), sampleSize);
             const probDetected = (1 - probNotDetected) * 100;
-            document.getElementById('binomialResult').textContent = `Probability of detecting at least one defect: ${probDetected.toFixed(2)}%`;
+            document.getElementById('binomialResult').textContent = `Probability of detection is: ${probDetected.toFixed(2)}%`;
         }
 
         function showTab(tabId) {
