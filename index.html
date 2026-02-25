@@ -3,160 +3,143 @@
 <head>
     <meta charset="UTF-8">
     <meta name="viewport" content="width=device-width, initial-scale=1.0">
-
     <title>MIL-STD-105E Sampling Calculator</title>
     <style>
-        h1 { font-size: 20px; }
         body { font-family: Arial, sans-serif; padding: 20px; }
-        label { display: block; margin-bottom: 5px; }
-        select, input { margin-bottom: 15px; padding: 5px; width: 100%; }
-        .result { margin-top: 20px; font-weight: bold; }
+        label { display: block; margin-bottom: 5px; font-weight: bold; }
+        select, input, button { margin-bottom: 15px; padding: 8px; width: 100%; }
+        .result { margin-top: 20px; font-weight: bold; font-size: 18px; }
         .accepted { color: green; }
         .rejected { color: red; }
         .hidden { display: none; }
         .header { display: flex; justify-content: space-between; align-items: center; margin-bottom: 20px; }
-        .logo { max-height: 100px; }
-        .tab-button { margin-right: 10px; padding: 10px 20px; cursor: pointer; border: 1px solid #ccc; background-color: #f0f0f0; }
-        .tab-button.active { background-color: #ddd; font-weight: bold; }
-        .tab-content { display: none; }
-        .tab-content.active { display: block; }
+        .logo { max-height: 80px; }
+        .note { background: #f5f5f5; padding: 10px; border-left: 4px solid #007bff; margin-bottom: 20px; }
     </style>
 </head>
 <body>
-    <div class="header">
-        <img src="Scitra logo.jpg" alt="Scitra Logo" class="logo">
-        <div>
-            <h2>Quality Department</h2>
-            <h3>IPC and Packaging Section</h3>
-        </div>
-    </div>
 
+<div class="header">
+    <img src="Scitra logo.png" alt="Scitra Logo" class="logo">
     <div>
-        <button class="tab-button active" onclick="showTab('tab1')">Sampling Calculator</button>
-        <button class="tab-button" onclick="showTab('tab2')">Detection Probability</button>
+        <h2>IPC and Packaging Section</h2>
+        <h3>Quality Department</h3>
     </div>
+</div>
 
-    <div id="tab1" class="tab-content active">
-        <h1>MIL-STD-105E Sampling Calculator</h1>
-        <label for="population">Population Size:</label>
-        <select id="population">
-            <option value="0">300-500</option>
-            <option value="1">501-1200</option>
-            <option value="2">1201-3200</option>
-            <option value="3">3201-10000</option>
-            <option value="4">10001-35000</option>
-            <option value="5">35001-150000</option>
-            <option value="6">150001-500000</option>
-            <option value="7">500001-∞</option>
-        </select>
+<h1>MIL-STD-105E / ISO 2859-1 Sampling Calculator</h1>
 
-        <label for="samplingLevel">Sampling Level:</label>
-        <select id="samplingLevel">
-            <option value="normal">Normal</option>
-            <option value="tightened">Tightened</option>
-            <option value="reduced">Reduced</option>
-            <option value="special1">Special 1</option>
-            <option value="special2">Special 2</option>
-            <option value="special3">Special 3</option>
-        </select>
+<div class="note">
+    Default recommendation: Use General Inspection Level II for routine production inspection.
+    Reduced inspection should only be applied based on switching rules and historical acceptance performance.
+</div>
 
-        <button onclick="calculateSampleSize()">Calculate</button>
+<label for="lotSize">Lot Size (Population):</label>
+<select id="lotSize">
+    <option value="A">300-500</option>
+    <option value="B">501-1200</option>
+    <option value="C">1201-3200</option>
+    <option value="D">3201-10000</option>
+    <option value="E">10001-35000</option>
+    <option value="F">35001-150000</option>
+    <option value="G">150001-500000</option>
+    <option value="H">500001+</option>
+</select>
 
-        <div class="result" id="sampleSize"></div>
+<label for="inspectionLevel">General Inspection Level:</label>
+<select id="inspectionLevel">
+    <option value="II">Level II (Default)</option>
+    <option value="I">Level I (Reduced sample)</option>
+    <option value="III">Level III (Stricter inspection)</option>
+</select>
 
-        <div id="defectSection" class="hidden">
-            <label for="defectType">Defect Type:</label>
-            <select id="defectType">
-                <option value="critical">Critical (0%)</option>
-                <option value="majorA">Major A (0.1%)</option>
-                <option value="majorB">Major B (1%)</option>
-                <option value="minor">Minor (4%)</option>
-            </select>
+<label for="inspectionStatus">Inspection Status (Switching Rule):</label>
+<select id="inspectionStatus">
+    <option value="normal">Normal</option>
+    <option value="tightened">Tightened</option>
+    <option value="reduced">Reduced</option>
+</select>
 
-            <label for="defectCount">Number of Defects:</label>
-            <input type="number" id="defectCount" min="0">
+<button onclick="calculateSampleSize()">Calculate Sample Size</button>
 
-            <button onclick="calculateAcceptance()">Calculate</button>
-            <div class="result" id="result"></div>
-        </div>
-    </div>
+<div class="result" id="sampleSize"></div>
 
-    <div id="tab2" class="tab-content">
-        <h1>Detection Probability</h1>
-        <label for="batchSize">Batch Size:</label>
-        <input type="number" id="batchSize" min="1">
+<div id="defectSection" class="hidden">
 
-        <label for="sampleSizeBinomial">Sample Size:</label>
-        <input type="number" id="sampleSizeBinomial" min="1">
+    <label for="defectType">Defect Category (AQL):</label>
+    <select id="defectType">
+        <option value="critical">Critical (AQL 0.0)</option>
+        <option value="major">Major (AQL 1.0)</option>
+        <option value="minor">Minor (AQL 4.0)</option>
+    </select>
 
-        <label for="defectsNumber">Number of Defects in Batch:</label>
-        <input type="number" id="defectsNumber" min="1">
+    <label for="defectCount">Number of Defects Found:</label>
+    <input type="number" id="defectCount" min="0">
 
-        <button onclick="calculateDetectionProbability()">Calculate</button>
-        <div class="result" id="binomialResult"></div>
-    </div>
+    <button onclick="calculateAcceptance()">Calculate Acceptance Decision</button>
 
-    <script>
-        const sampleSizeTable = {
-            normal: [50, 80, 125, 200, 315, 500, 800, 1250],
-            tightened: [80, 125, 200, 315, 500, 800, 1250, 1250],
-            reduced: [32, 50, 80, 125, 200, 315, 500, 800],
-            special1: [8, 13, 20, 32, 50, 80, 125, 200],
-            special2: [5, 8, 13, 20, 32, 50, 80, 125],
-            special3: [3, 5, 8, 13, 20, 32, 50, 80]
-        };
+    <div class="result" id="result"></div>
+</div>
 
-        const rejectionLimits = {
-            critical: [0, 0, 0, 0, 0, 0, 0, 0],
-            majorA: [1, 1, 1, 2, 2, 2, 3, 4],
-            majorB: [2, 3, 4, 6, 8, 11, 15, 22],
-            minor: [6, 8, 11, 15, 22, 22, 22, 22]
-        };
+<script>
+    // Simplified Code Letter to Sample Size (Aligned to Level II typical use in FMCG/Packaging)
+    const sampleSizeMatrix = {
+        I:   { A: 32, B: 50, C: 80, D: 125, E: 200, F: 315, G: 500, H: 800 },
+        II:  { A: 50, B: 80, C: 125, D: 200, E: 315, F: 500, G: 800, H: 1250 },
+        III: { A: 80, B: 125, C: 200, D: 315, E: 500, F: 800, G: 1250, H: 1250 }
+    };
 
-        let currentSampleSize = 0;
+    // Acceptance limits (single sampling – commonly used AQL sets)
+    const acceptanceTable = {
+        critical: { Ac: 0, Re: 1 },
+        major: { Ac: 7, Re: 8 },   // typical for ~200 sample @ AQL 1.0
+        minor: { Ac: 14, Re: 15 }  // typical for ~200 sample @ AQL 4.0
+    };
 
-        function calculateSampleSize() {
-            const populationIndex = parseInt(document.getElementById('population').value);
-            const samplingLevel = document.getElementById('samplingLevel').value;
-            currentSampleSize = sampleSizeTable[samplingLevel][populationIndex];
-            document.getElementById('sampleSize').textContent = `Sample Size: ${currentSampleSize}`;
-            document.getElementById('defectSection').classList.remove('hidden');
+    let currentSampleSize = 0;
+
+    function calculateSampleSize() {
+        const lotSize = document.getElementById('lotSize').value;
+        const inspectionLevel = document.getElementById('inspectionLevel').value;
+
+        currentSampleSize = sampleSizeMatrix[inspectionLevel][lotSize];
+
+        document.getElementById('sampleSize').textContent =
+            `Sample Size (Based on Level ${inspectionLevel}): ${currentSampleSize} units`;
+
+        document.getElementById('defectSection').classList.remove('hidden');
+        document.getElementById('result').textContent = "";
+    }
+
+    function calculateAcceptance() {
+        const defectType = document.getElementById('defectType').value;
+        const defectCount = parseInt(document.getElementById('defectCount').value);
+
+        if (isNaN(defectCount)) {
+            alert("Please enter number of defects.");
+            return;
         }
 
-        function calculateAcceptance() {
-            const defectType = document.getElementById('defectType').value;
-            const defectCount = parseInt(document.getElementById('defectCount').value);
-            const populationIndex = parseInt(document.getElementById('population').value);
-            const acceptanceLimit = rejectionLimits[defectType][populationIndex];
-            const resultElement = document.getElementById('result');
-            if (defectCount <= acceptanceLimit) {
-                resultElement.textContent = `Accepted. Maximum allowed defects: ${acceptanceLimit}`;
-                resultElement.className = 'result accepted';
-            } else {
-                resultElement.textContent = `Rejected. Maximum allowed defects: ${acceptanceLimit}`;
-                resultElement.className = 'result rejected';
-            }
-        }
+        const Ac = acceptanceTable[defectType].Ac;
+        const Re = acceptanceTable[defectType].Re;
 
-        function calculateDetectionProbability() {
-            const batchSize = parseInt(document.getElementById('batchSize').value);
-            const sampleSize = parseInt(document.getElementById('sampleSizeBinomial').value);
-            const defects = parseInt(document.getElementById('defectsNumber').value);
-            const defectRate = defects / batchSize;
-            const probNotDetected = Math.pow((1 - defectRate), sampleSize);
-            const probDetected = (1 - probNotDetected) * 100;
-            document.getElementById('binomialResult').textContent = `Probability of detection is: ${probDetected.toFixed(2)}%`;
-        }
+        const resultElement = document.getElementById('result');
 
-        function showTab(tabId) {
-            const tabs = document.querySelectorAll('.tab-content');
-            const buttons = document.querySelectorAll('.tab-button');
-            tabs.forEach(tab => tab.classList.remove('active'));
-            buttons.forEach(btn => btn.classList.remove('active'));
-            document.getElementById(tabId).classList.add('active');
-            event.target.classList.add('active');
+        if (defectCount <= Ac) {
+            resultElement.textContent =
+                `ACCEPTED (Ac=${Ac}, Re=${Re}) – Lot meets AQL requirement`;
+            resultElement.className = 'result accepted';
+        } else if (defectCount >= Re) {
+            resultElement.textContent =
+                `REJECTED (Ac=${Ac}, Re=${Re}) – Lot does not meet AQL requirement`;
+            resultElement.className = 'result rejected';
+        } else {
+            resultElement.textContent =
+                `Borderline zone between Ac and Re. Refer to standard table.`;
+            resultElement.className = 'result';
         }
-    </script>
+    }
+</script>
+
 </body>
 </html>
-
