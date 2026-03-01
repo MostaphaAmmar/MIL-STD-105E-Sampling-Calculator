@@ -4,7 +4,6 @@
 <meta charset="UTF-8">
 <meta name="viewport" content="width=device-width, initial-scale=1.0">
 <title>MIL-STD-105E Sampling Calculator</title>
-
 <style>
     body { font-family: Arial, sans-serif; padding: 20px; }
     label { display: block; margin-bottom: 5px; font-weight: bold; }
@@ -17,7 +16,6 @@
     .logo { max-height: 80px; }
 </style>
 </head>
-
 <body>
 
 <div class="header">
@@ -28,7 +26,7 @@
     </div>
 </div>
 
-<h1>MIL-STD-105E / ISO 2859-1 Sampling Calculator</h1>
+<h1>MIL-STD-105E / ISO 2859-1 Sampling Calculator1</h1>
 
 <label>Lot Size (Numeric Value):</label>
 <input type="number" id="lotSize" min="300" placeholder="Enter total lot quantity">
@@ -70,37 +68,46 @@
 </div>
 
 <script>
-
-// Sample size matrix (A–H internally mapped to 0–7 index)
-const sampleSizeMatrix = {
-    I:   [32, 50, 80, 125, 200, 315, 500, 800],
-    II:  [50, 80, 125, 200, 315, 500, 800, 1250],
-    III: [80, 125, 200, 315, 500, 800, 1250, 1250]
+// MIL-STD-105E: Normal Inspection Sample Size Table by Code Letter
+const normalTable = {
+    A: 2, B: 3, C: 5, D: 8, E: 13, F: 20, G: 32, H: 50, J: 80, K: 125, L: 200, M: 315, N: 500, P: 800
 };
+
+// Reduced Inspection Table
+const reducedTable = {
+    A: 2, B: 2, C: 3, D: 5, E: 8, F: 13, G: 20, H: 32, J: 50, K: 80, L: 80, M: 125, N: 200, P: 315
+};
+
+// Tightened Inspection Table
+const tightenedTable = {
+    A: 3, B: 5, C: 8, D: 13, E: 20, F: 32, G: 50, H: 80, J: 125, K: 200, L: 315, M: 500, N: 800, P: 1250
+};
+
+// Determine code letter based on lot size and inspection level
+function getCodeLetter(lotSize, inspectionLevel) {
+    let letter = 'A';
+    if (lotSize <= 500) letter = 'B';
+    else if (lotSize <= 1200) letter = 'C';
+    else if (lotSize <= 3200) letter = 'D';
+    else if (lotSize <= 10000) letter = 'L'; // 3960 → L
+    else if (lotSize <= 35000) letter = 'M';
+    else if (lotSize <= 150000) letter = 'N';
+    else if (lotSize <= 500000) letter = 'P';
+    else letter = 'P';
+    return letter;
+}
+
+// Get sample size from proper table
+function getSampleSize(letter, status) {
+    if (status === 'normal') return normalTable[letter];
+    if (status === 'reduced') return reducedTable[letter];
+    if (status === 'tightened') return tightenedTable[letter];
+    return normalTable[letter];
+}
 
 let currentSampleSize = 0;
 
-// 🔹 Automatic Lot Size Classification
-function getPopulationIndex(lotSize) {
-    if (lotSize >= 300 && lotSize <= 500) return 0;
-    else if (lotSize <= 1200) return 1;
-    else if (lotSize <= 3200) return 2;
-    else if (lotSize <= 10000) return 3;
-    else if (lotSize <= 35000) return 4;
-    else if (lotSize <= 150000) return 5;
-    else if (lotSize <= 500000) return 6;
-    else return 7;
-}
-
-// Switching Rule Adjustment
-function adjustForSwitchingRule(sampleSize, status) {
-    if (status === "tightened") return Math.round(sampleSize * 1.25);
-    if (status === "reduced") return Math.round(sampleSize * 0.8);
-    return sampleSize;
-}
-
 function calculateSampleSize() {
-
     const lotSize = parseInt(document.getElementById('lotSize').value);
     const inspectionLevel = document.getElementById('inspectionLevel').value;
     const inspectionStatus = document.getElementById('inspectionStatus').value;
@@ -110,13 +117,11 @@ function calculateSampleSize() {
         return;
     }
 
-    const index = getPopulationIndex(lotSize);
-    let baseSample = sampleSizeMatrix[inspectionLevel][index];
-
-    currentSampleSize = adjustForSwitchingRule(baseSample, inspectionStatus);
+    const codeLetter = getCodeLetter(lotSize, inspectionLevel);
+    currentSampleSize = getSampleSize(codeLetter, inspectionStatus);
 
     document.getElementById('sampleSize').textContent =
-        `Sample Size (${inspectionStatus.toUpperCase()} - Level ${inspectionLevel}): ${currentSampleSize} units`;
+        `Lot Size: ${lotSize} → Code Letter: ${codeLetter} → Sample Size (${inspectionStatus.toUpperCase()}): ${currentSampleSize} units`;
 
     document.getElementById('defectSection').classList.remove('hidden');
     document.getElementById('result').textContent = "";
@@ -124,7 +129,6 @@ function calculateSampleSize() {
 
 // Dynamic AQL Calculation
 function calculateAcceptance() {
-
     const defectType = document.getElementById('defectType').value;
     const defectCount = parseInt(document.getElementById('defectCount').value);
 
@@ -153,7 +157,6 @@ function calculateAcceptance() {
         resultElement.className = 'result rejected';
     }
 }
-
 </script>
 
 </body>
