@@ -1,22 +1,24 @@
 <!DOCTYPE html>
 <html lang="en">
 <head>
-    <meta charset="UTF-8">
-    <meta name="viewport" content="width=device-width, initial-scale=1.0">
-    <title>MIL-STD-105E Sampling Calculator</title>
-    <style>
-        body { font-family: Arial, sans-serif; padding: 20px; }
-        label { display: block; margin-bottom: 5px; font-weight: bold; }
-        select, input, button { margin-bottom: 15px; padding: 8px; width: 100%; }
-        .result { margin-top: 20px; font-weight: bold; font-size: 18px; }
-        .accepted { color: green; }
-        .rejected { color: red; }
-        .hidden { display: none; }
-        .header { display: flex; justify-content: space-between; align-items: center; margin-bottom: 20px; }
-        .logo { max-height: 80px; }
-        .note { background: #f5f5f5; padding: 10px; border-left: 4px solid #007bff; margin-bottom: 20px; }
-    </style>
+<meta charset="UTF-8">
+<meta name="viewport" content="width=device-width, initial-scale=1.0">
+<title>MIL-STD-105E Sampling Calculator</title>
+
+<style>
+    body { font-family: Arial, sans-serif; padding: 20px; }
+    label { display: block; margin-bottom: 5px; font-weight: bold; }
+    select, input, button { margin-bottom: 15px; padding: 8px; width: 100%; }
+    .result { margin-top: 20px; font-weight: bold; font-size: 18px; }
+    .accepted { color: green; }
+    .rejected { color: red; }
+    .hidden { display: none; }
+    .header { display: flex; justify-content: space-between; align-items: center; margin-bottom: 20px; }
+    .logo { max-height: 80px; }
+    .note { background: #f5f5f5; padding: 10px; border-left: 4px solid #007bff; margin-bottom: 20px; }
+</style>
 </head>
+
 <body>
 
 <div class="header">
@@ -29,7 +31,7 @@
 
 <h1>MIL-STD-105E / ISO 2859-1 Sampling Calculator</h1>
 
-<label for="lotSize">Lot Size (Population):</label>
+<label>Lot Size (Population):</label>
 <select id="lotSize">
     <option value="A">300-500</option>
     <option value="B">501-1200</option>
@@ -41,14 +43,14 @@
     <option value="H">500001+</option>
 </select>
 
-<label for="inspectionLevel">General Inspection Level:</label>
+<label>General Inspection Level:</label>
 <select id="inspectionLevel">
-    <option value="II">Level II (Default)</option>
-    <option value="I">Level I (Reduced sample)</option>
-    <option value="III">Level III (Stricter inspection)</option>
+    <option value="I">Level I</option>
+    <option value="II" selected>Level II (Default)</option>
+    <option value="III">Level III</option>
 </select>
 
-<label for="inspectionStatus">Inspection Status (Switching Rule):</label>
+<label>Inspection Status (Switching Rule):</label>
 <select id="inspectionStatus">
     <option value="normal">Normal</option>
     <option value="tightened">Tightened</option>
@@ -61,81 +63,94 @@
 
 <div id="defectSection" class="hidden">
 
-    <label for="defectType">Defect Category (AQL):</label>
-    <select id="defectType">
-        <option value="critical">Critical (AQL 0.0)</option>
-        <option value="major">Major (AQL 1.0)</option>
-        <option value="minor">Minor (AQL 4.0)</option>
-    </select>
+<label>Defect Category (AQL):</label>
+<select id="defectType">
+    <option value="critical">Critical (AQL 0.0)</option>
+    <option value="major">Major (AQL 1.0)</option>
+    <option value="minor">Minor (AQL 4.0)</option>
+</select>
 
-    <label for="defectCount">Number of Defects Found:</label>
-    <input type="number" id="defectCount" min="0">
+<label>Number of Defects Found:</label>
+<input type="number" id="defectCount" min="0">
 
-    <button onclick="calculateAcceptance()">Calculate Acceptance Decision</button>
+<button onclick="calculateAcceptance()">Calculate Acceptance Decision</button>
 
-    <div class="result" id="result"></div>
+<div class="result" id="result"></div>
+
 </div>
 
 <script>
-    // Simplified Code Letter to Sample Size (Aligned to Level II typical use in FMCG/Packaging)
-    const sampleSizeMatrix = {
-        I:   { A: 32, B: 50, C: 80, D: 125, E: 200, F: 315, G: 500, H: 800 },
-        II:  { A: 50, B: 80, C: 125, D: 200, E: 315, F: 500, G: 800, H: 1250 },
-        III: { A: 80, B: 125, C: 200, D: 315, E: 500, F: 800, G: 1250, H: 1250 }
-    };
 
-    // Acceptance limits (single sampling – commonly used AQL sets)
-    const acceptanceTable = {
-        critical: { Ac: 0, Re: 1 },
-        major: { Ac: 7, Re: 8 },   // typical for ~200 sample @ AQL 1.0
-        minor: { Ac: 14, Re: 15 }  // typical for ~200 sample @ AQL 4.0
-    };
+// Base Sample Size Matrix (General Inspection Levels)
+const baseSampleSizeMatrix = {
+    I:   { A: 32, B: 50, C: 80, D: 125, E: 200, F: 315, G: 500, H: 800 },
+    II:  { A: 50, B: 80, C: 125, D: 200, E: 315, F: 500, G: 800, H: 1250 },
+    III: { A: 80, B: 125, C: 200, D: 315, E: 500, F: 800, G: 1250, H: 1250 }
+};
 
-    let currentSampleSize = 0;
+let currentSampleSize = 0;
 
-    function calculateSampleSize() {
-        const lotSize = document.getElementById('lotSize').value;
-        const inspectionLevel = document.getElementById('inspectionLevel').value;
+// Switching rule adjustment
+function adjustForSwitchingRule(sampleSize, status) {
+    if (status === "tightened") {
+        return Math.round(sampleSize * 1.25);
+    }
+    if (status === "reduced") {
+        return Math.round(sampleSize * 0.8);
+    }
+    return sampleSize; // normal
+}
 
-        currentSampleSize = sampleSizeMatrix[inspectionLevel][lotSize];
+function calculateSampleSize() {
 
-        document.getElementById('sampleSize').textContent =
-            `Sample Size (Based on Level ${inspectionLevel}): ${currentSampleSize} units`;
+    const lotSize = document.getElementById('lotSize').value;
+    const inspectionLevel = document.getElementById('inspectionLevel').value;
+    const inspectionStatus = document.getElementById('inspectionStatus').value;
 
-        document.getElementById('defectSection').classList.remove('hidden');
-        document.getElementById('result').textContent = "";
+    let baseSample = baseSampleSizeMatrix[inspectionLevel][lotSize];
+    currentSampleSize = adjustForSwitchingRule(baseSample, inspectionStatus);
+
+    document.getElementById('sampleSize').textContent =
+        `Sample Size (${inspectionStatus.toUpperCase()} - Level ${inspectionLevel}): ${currentSampleSize} units`;
+
+    document.getElementById('defectSection').classList.remove('hidden');
+    document.getElementById('result').textContent = "";
+}
+
+// Dynamic Acceptance Calculation (Approximation Based on AQL %)
+function calculateAcceptance() {
+
+    const defectType = document.getElementById('defectType').value;
+    const defectCount = parseInt(document.getElementById('defectCount').value);
+
+    if (isNaN(defectCount)) {
+        alert("Please enter number of defects.");
+        return;
     }
 
-    function calculateAcceptance() {
-        const defectType = document.getElementById('defectType').value;
-        const defectCount = parseInt(document.getElementById('defectCount').value);
+    let aqlRate;
 
-        if (isNaN(defectCount)) {
-            alert("Please enter number of defects.");
-            return;
-        }
+    if (defectType === "critical") aqlRate = 0.0001;
+    if (defectType === "major") aqlRate = 0.01;
+    if (defectType === "minor") aqlRate = 0.04;
 
-        const Ac = acceptanceTable[defectType].Ac;
-        const Re = acceptanceTable[defectType].Re;
+    const Ac = Math.floor(currentSampleSize * aqlRate);
+    const Re = Ac + 1;
 
-        const resultElement = document.getElementById('result');
+    const resultElement = document.getElementById('result');
 
-        if (defectCount <= Ac) {
-            resultElement.textContent =
-                `ACCEPTED (Ac=${Ac}, Re=${Re}) – Lot meets AQL requirement`;
-            resultElement.className = 'result accepted';
-        } else if (defectCount >= Re) {
-            resultElement.textContent =
-                `REJECTED (Ac=${Ac}, Re=${Re}) – Lot does not meet AQL requirement`;
-            resultElement.className = 'result rejected';
-        } else {
-            resultElement.textContent =
-                `Borderline zone between Ac and Re. Refer to standard table.`;
-            resultElement.className = 'result';
-        }
+    if (defectCount <= Ac) {
+        resultElement.textContent =
+            `ACCEPTED (Ac=${Ac}, Re=${Re}) – Lot meets AQL requirement`;
+        resultElement.className = 'result accepted';
+    } else {
+        resultElement.textContent =
+            `REJECTED (Ac=${Ac}, Re=${Re}) – Lot does not meet AQL requirement`;
+        resultElement.className = 'result rejected';
     }
+}
+
 </script>
 
 </body>
 </html>
-
