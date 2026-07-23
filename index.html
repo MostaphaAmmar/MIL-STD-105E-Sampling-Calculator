@@ -196,12 +196,17 @@ return normalTable[letter];
 }
 
 // CONFIDENCE FUNCTION
-function calculateConfidence(sampleSize,aql){
+function calculateConfidence(sampleSize){
 
-let confidence=1-Math.pow((1-aql),sampleSize);
+    const E = 0.05; // Margin of Error = 5%
 
-return (confidence*100).toFixed(2);
+    // حساب Z
+    let Z = E / Math.sqrt(0.25 / sampleSize);
 
+    // تحويل Z إلى Confidence Level باستخدام CDF
+    let confidence = (1 - Math.exp(-0.717 * Z - 0.416 * Z * Z)) * 100;
+
+    return confidence.toFixed(2);
 }
 
 // TAB 1 CALCULATOR
@@ -214,7 +219,7 @@ let aql=parseFloat(document.getElementById('aqlSelect').value);
 let letter=getCodeLetter(lotSize);
 let sample=getSampleSize(letter,status);
 
-let confidence=calculateConfidence(sample,aql);
+let confidence=calculateConfidence(sampleSize);
 
 document.getElementById('sampleSize').innerText=
 `Lot Size ${lotSize} → Code Letter ${letter} → Sample Size ${sample}
